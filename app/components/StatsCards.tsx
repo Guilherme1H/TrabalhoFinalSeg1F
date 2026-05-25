@@ -3,13 +3,21 @@
 import { Utensils, Settings, Clock, TrendingUp } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from "recharts";
 
+interface FastDataStructure {
+  id: string;
+  startTime: string;
+  plannedType: string;
+  endTime: string | null;
+  duration?: string;
+}
+
 interface StatsCardsProps {
   totalCals: number;
   dailyGoal: number;
   chartData: Array<{ day: string; cals: number; fastHours: number }>;
   onOpenGoal: () => void;
   onStartFast: (type: string) => void;
-  activeFast: Record<string, any> | null;
+  activeFast: FastDataStructure | null;
   onEndFast: () => void;
 }
 

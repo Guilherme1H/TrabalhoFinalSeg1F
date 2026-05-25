@@ -139,10 +139,16 @@ export default function FitTrackApp() {
         usuario: user.email,
         exportadoEm: new Date().toLocaleString("pt-BR"),
         meta: dailyGoal,
-        refeicoes: meals.map(({ id, userId, ...rest }) => rest),
+        refeicoes: meals.map((m) => {
+          const { id, userId, ...rest } = m;
+          return rest;
+        }),
         jejuns: fasts
           .filter((f) => f.endTime)
-          .map(({ id, userId, ...rest }) => rest),
+          .map((f) => {
+            const { id, userId, ...rest } = f;
+            return rest;
+          }),
       };
 
       const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -223,9 +229,10 @@ export default function FitTrackApp() {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
 
-    const mealType = fd.get("type");
-    const validTypes = ["Café", "Almoço", "Lanche", "Jantar", "Ceia"] as const;
-    const finalType = validTypes.includes(mealType as any)
+    const mealType = fd.get("type") as string;
+    const finalType = ["Café", "Almoço", "Lanche", "Jantar", "Ceia"].includes(
+      mealType
+    )
       ? (mealType as "Café" | "Almoço" | "Lanche" | "Jantar" | "Ceia")
       : "Almoço";
 
@@ -298,7 +305,7 @@ export default function FitTrackApp() {
           totalCals={totalCals}
           dailyGoal={dailyGoal}
           chartData={chartData}
-          activeFast={activeFast ? { ...activeFast } : null}
+          activeFast={activeFast}
           onOpenGoal={() => setShowGoalModal(true)}
           onStartFast={(t: string) =>
             addDoc(collection(db, "fasts"), {
