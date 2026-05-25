@@ -1,4 +1,5 @@
 "use client";
+
 import {
   LineChart,
   Line,
@@ -17,7 +18,7 @@ interface MainChartProps {
 
 export default function MainChart({ data, dailyGoal }: MainChartProps) {
   return (
-    <div className="bg-white p-8 rounded-[3rem] border border-slate-100 dark:border-slate-700 shadow-sm transition-colors duration-300">
+    <div className="bg-white dark:bg-slate-800 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-700 shadow-sm transition-colors duration-300">
       <h3 className="font-black uppercase tracking-[0.2em] text-[10px] mb-10 text-slate-400 dark:text-slate-500">
         Progresso Semanal (kcal)
       </h3>

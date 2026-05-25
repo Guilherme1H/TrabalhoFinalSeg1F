@@ -139,10 +139,10 @@ export default function FitTrackApp() {
         usuario: user.email,
         exportadoEm: new Date().toLocaleString("pt-BR"),
         meta: dailyGoal,
-        refeicoes: meals.map(({ id: _id, userId: _userId, ...rest }) => rest),
+        refeicoes: meals.map(({ id, userId, ...rest }) => rest),
         jejuns: fasts
           .filter((f) => f.endTime)
-          .map(({ id: _id, userId: _userId, ...rest }) => rest),
+          .map(({ id, userId, ...rest }) => rest),
       };
 
       const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -222,12 +222,19 @@ export default function FitTrackApp() {
   const handleSubmitMeal = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+
+    const mealType = fd.get("type");
+    const validTypes = ["Café", "Almoço", "Lanche", "Jantar", "Ceia"] as const;
+    const finalType = validTypes.includes(mealType as any)
+      ? (mealType as "Café" | "Almoço" | "Lanche" | "Jantar" | "Ceia")
+      : "Almoço";
+
     const raw = {
       description: fd.get("description") as string,
       calories: Number(fd.get("calories")),
       date: fd.get("date") as string,
       time: fd.get("time") as string,
-      type: fd.get("type") as any,
+      type: finalType,
     };
     const result = mealSchema.safeParse(raw);
     if (!result.success) return setError(result.error.issues[0].message);

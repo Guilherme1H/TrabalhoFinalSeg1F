@@ -1,4 +1,5 @@
 "use client";
+
 import { Utensils, Settings, Clock, TrendingUp } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from "recharts";
 
@@ -8,7 +9,7 @@ interface StatsCardsProps {
   chartData: Array<{ day: string; cals: number; fastHours: number }>;
   onOpenGoal: () => void;
   onStartFast: (type: string) => void;
-  activeFast: Record<string, unknown> | null;
+  activeFast: Record<string, any> | null;
   onEndFast: () => void;
 }
 
