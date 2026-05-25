@@ -16,17 +16,10 @@ import {
 } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import {
-  PlusCircle,
-  Clock,
-  Utensils,
-  TrendingUp,
   Trash2,
   Calendar,
-  Settings,
   LogOut,
   Edit2,
-  Timer,
-  StopCircle,
   AlertCircle,
   Loader2,
   Download,
@@ -39,6 +32,30 @@ import LoginScreen from "./login";
 import StatsCards from "./components/StatsCards";
 import MainChart from "./components/MainChart";
 
+interface MealData {
+  id: string;
+  description: string;
+  calories: number;
+  date: string;
+  time: string;
+  type: "Café" | "Almoço" | "Lanche" | "Jantar" | "Ceia";
+  userId?: string;
+}
+
+interface FastData {
+  id: string;
+  startTime: string;
+  plannedType: string;
+  endTime: string | null;
+  duration?: string;
+  userId?: string;
+}
+
+interface UserAuth {
+  uid: string;
+  email: string | null;
+}
+
 const mealSchema = z.object({
   description: z.string().min(2, "Descrição muito curta"),
   calories: z.number().min(1, "Mínimo 1 kcal"),
@@ -50,14 +67,14 @@ const mealSchema = z.object({
 export default function FitTrackApp() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserAuth | null>(null);
   const [darkMode, setDarkMode] = useState(false);
-  const [meals, setMeals] = useState<any[]>([]);
-  const [fasts, setFasts] = useState<any[]>([]);
-  const [activeFast, setActiveFast] = useState<any>(null);
+  const [meals, setMeals] = useState<MealData[]>([]);
+  const [fasts, setFasts] = useState<FastData[]>([]);
+  const [activeFast, setActiveFast] = useState<FastData | null>(null);
   const [dailyGoal, setDailyGoal] = useState(2000);
   const [showMealModal, setShowMealModal] = useState(false);
-  const [editingMeal, setEditingMeal] = useState<any>(null);
+  const [editingMeal, setEditingMeal] = useState<MealData | null>(null);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterDate, setFilterDate] = useState(
@@ -76,8 +93,8 @@ export default function FitTrackApp() {
     }
 
     const unsubAuth = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
       if (u) {
+        setUser({ uid: u.uid, email: u.email });
         try {
           const goalSnap = await getDoc(doc(db, "userSettings", u.uid));
           if (goalSnap.exists()) setDailyGoal(goalSnap.data().dailyGoal);
@@ -87,7 +104,9 @@ export default function FitTrackApp() {
             where("userId", "==", u.uid)
           );
           onSnapshot(qMeals, (snap) =>
-            setMeals(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+            setMeals(
+              snap.docs.map((d) => ({ id: d.id, ...d.data() } as MealData))
+            )
           );
 
           const qFasts = query(
@@ -95,13 +114,17 @@ export default function FitTrackApp() {
             where("userId", "==", u.uid)
           );
           onSnapshot(qFasts, (snap) => {
-            const allFasts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            const allFasts = snap.docs.map(
+              (d) => ({ id: d.id, ...d.data() } as FastData)
+            );
             setFasts(allFasts);
-            setActiveFast(allFasts.find((f: any) => !f.endTime) || null);
+            setActiveFast(allFasts.find((f) => !f.endTime) || null);
           });
-        } catch (e) {
+        } catch {
           setError("Erro de conexão com o banco.");
         }
+      } else {
+        setUser(null);
       }
       setLoading(false);
     });
@@ -112,13 +135,14 @@ export default function FitTrackApp() {
     try {
       if (!user) return;
       const data = {
+        projeto: "trabalho final Jejum",
         usuario: user.email,
         exportadoEm: new Date().toLocaleString("pt-BR"),
         meta: dailyGoal,
-        refeicoes: meals.map(({ id, userId, ...rest }) => rest),
+        refeicoes: meals.map(({ id: _id, userId: _userId, ...rest }) => rest),
         jejuns: fasts
           .filter((f) => f.endTime)
-          .map(({ id, userId, ...rest }) => rest),
+          .map(({ id: _id, userId: _userId, ...rest }) => rest),
       };
 
       const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -127,7 +151,7 @@ export default function FitTrackApp() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `fittrack-backup.json`;
+      link.download = `trabalho-final-jejum-backup.json`;
 
       document.body.appendChild(link);
       setTimeout(() => {
@@ -135,10 +159,8 @@ export default function FitTrackApp() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(link);
       }, 100);
-    } catch (err) {
-      alert(
-        "Erro ao exportar. Use o link de produção da Vercel para baixar o arquivo."
-      );
+    } catch {
+      alert("Erro ao exportar o arquivo.");
     }
   };
 
@@ -176,7 +198,7 @@ export default function FitTrackApp() {
           .reduce((acc, m) => acc + m.calories, 0),
         fastHours: fasts
           .filter((f) => f.endTime?.startsWith(ds))
-          .reduce((acc, f) => acc + Number(f.duration), 0),
+          .reduce((acc, f) => acc + Number(f.duration || 0), 0),
       };
     });
   }, [meals, fasts]);
@@ -236,10 +258,10 @@ export default function FitTrackApp() {
         <header className="flex justify-between items-center mb-8 bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors duration-300">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-indigo-100 dark:shadow-none">
-              G
+              J
             </div>
             <h1 className="font-black text-slate-800 dark:text-white hidden sm:block uppercase tracking-tighter italic">
-              Trabalho Final Jejum
+              trabalho final Jejum
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -269,7 +291,7 @@ export default function FitTrackApp() {
           totalCals={totalCals}
           dailyGoal={dailyGoal}
           chartData={chartData}
-          activeFast={activeFast}
+          activeFast={activeFast ? { ...activeFast } : null}
           onOpenGoal={() => setShowGoalModal(true)}
           onStartFast={(t: string) =>
             addDoc(collection(db, "fasts"), {
@@ -280,6 +302,7 @@ export default function FitTrackApp() {
             })
           }
           onEndFast={async () => {
+            if (!activeFast) return;
             const duration = (
               (new Date().getTime() -
                 new Date(activeFast.startTime).getTime()) /

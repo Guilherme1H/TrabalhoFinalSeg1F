@@ -9,7 +9,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { LogIn, Mail, Lock, UserPlus, LifeBuoy, ArrowLeft } from "lucide-react";
+import { Mail, Lock, ArrowLeft } from "lucide-react";
 
 export default function LoginScreen() {
   const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">(
@@ -23,7 +23,7 @@ export default function LoginScreen() {
   const handleGoogle = async () => {
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
-    } catch (err) {
+    } catch {
       setErrorMsg("Falha no login com Google.");
     }
   };
@@ -42,7 +42,7 @@ export default function LoginScreen() {
         alert("E-mail de recuperação enviado!");
         setAuthMode("login");
       }
-    } catch (err: any) {
+    } catch {
       setErrorMsg("Erro: Verifique os dados inseridos.");
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ export default function LoginScreen() {
       <div className="w-full max-w-md bg-white p-10 rounded-[3rem] shadow-2xl border border-slate-100">
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-indigo-600 rounded-3xl mb-4 flex items-center justify-center text-white text-3xl font-black shadow-xl">
-            G
+            J
           </div>
           <h1 className="text-2xl font-black uppercase tracking-tighter">
             {authMode === "login"

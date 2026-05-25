@@ -2,6 +2,16 @@
 import { Utensils, Settings, Clock, TrendingUp } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from "recharts";
 
+interface StatsCardsProps {
+  totalCals: number;
+  dailyGoal: number;
+  chartData: Array<{ day: string; cals: number; fastHours: number }>;
+  onOpenGoal: () => void;
+  onStartFast: (type: string) => void;
+  activeFast: Record<string, unknown> | null;
+  onEndFast: () => void;
+}
+
 export default function StatsCards({
   totalCals,
   dailyGoal,
@@ -10,7 +20,7 @@ export default function StatsCards({
   onStartFast,
   activeFast,
   onEndFast,
-}: any) {
+}: StatsCardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <div className="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-700 shadow-sm transition-colors duration-300">
@@ -23,7 +33,7 @@ export default function StatsCards({
             <Settings size={18} />
           </button>
         </div>
-        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 Logan uppercase tracking-widest">
+        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
           Calorias Hoje
         </p>
         <h2 className="text-4xl font-black my-1 dark:text-white">
